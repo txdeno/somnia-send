@@ -355,3 +355,19 @@ button:disabled {
 .mr-2 {
   margin-right: 0.5rem;
 }
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Success and error states */
+.transition-colors {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}

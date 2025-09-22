@@ -47,13 +47,25 @@ function App() {
           </p>
           <p className="mt-1">
             <a
-              href="https://mainnet.somnia.w3us.site/"
+              href="https://explorer.somnia.network/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:text-blue-700"
             >
               View on Somnia Explorer
             </a>
+          </p>
+          <p className="mt-2">
+            Built with heart, by{' '}
+            <a
+              href="https://x.com/hlee4real"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-700"
+            >
+              x.com/hlee4real
+            </a>
+            .
           </p>
         </footer>
       </div>

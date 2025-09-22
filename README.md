@@ -16,7 +16,7 @@ A decentralized application for sending SOMI tokens or ERC20 tokens to multiple 
 - **Network Name**: SOMNIA MAINNET
 - **Chain ID**: 5031
 - **RPC URL**: https://api.infra.mainnet.somnia.network/
-- **Explorer**: https://mainnet.somnia.w3us.site/
+- **Explorer**: https://explorer.somnia.network/
 - **Native Token**: SOMI
 
 ## Smart Contract Functions

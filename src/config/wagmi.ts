@@ -19,7 +19,7 @@ const somniaMainnet = {
   blockExplorers: {
     default: {
       name: 'Somnia Explorer',
-      url: 'https://mainnet.somnia.w3us.site/',
+      url: 'https://explorer.somnia.network/',
     },
   },
 } as const;

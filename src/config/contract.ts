@@ -1,24 +1,91 @@
+// Define the ABI with proper TypeScript typing
+const contractAbi = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "disperseNative",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "disperseToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "disperseTokenSimple",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const;
+
 export const getContractConfig = () => {
   const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
-  const contractAbiString = process.env.REACT_APP_CONTRACT_ABI;
 
   if (!contractAddress) {
     throw new Error('REACT_APP_CONTRACT_ADDRESS is not set in environment variables');
   }
 
-  if (!contractAbiString) {
-    throw new Error('REACT_APP_CONTRACT_ABI is not set in environment variables');
-  }
-
-  let contractAbi;
-  try {
-    contractAbi = JSON.parse(contractAbiString);
-  } catch (error) {
-    throw new Error('REACT_APP_CONTRACT_ABI is not valid JSON');
-  }
-
   return {
-    address: contractAddress,
+    address: contractAddress as `0x${string}`,
     abi: contractAbi,
-  };
+  } as const;
 };
