@@ -89,3 +89,17 @@ export const getContractConfig = () => {
     abi: contractAbi,
   } as const;
 };
+
+export const getERC20ABI = () => {
+  const erc20AbiString = process.env.REACT_APP_CONTRACT_ERC20_ABI;
+
+  if (!erc20AbiString) {
+    throw new Error('REACT_APP_CONTRACT_ERC20_ABI is not set in environment variables');
+  }
+
+  try {
+    return JSON.parse(erc20AbiString);
+  } catch (error) {
+    throw new Error('Invalid ERC20 ABI format in environment variables');
+  }
+};
