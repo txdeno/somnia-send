@@ -371,3 +371,34 @@ button:disabled {
 .transition-colors {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* Navigation styles */
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.h-16 {
+  height: 4rem;
+}
+
+.h-8 {
+  height: 2rem;
+}
+
+.w-8 {
+  width: 2rem;
+}
+
+.space-x-3 > * + * {
+  margin-left: 0.75rem;
+}
+
+.border-b {
+  border-bottom: 1px solid #d1d5db;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}

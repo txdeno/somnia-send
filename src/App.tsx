@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Navigation } from './components/Navigation';
 import { RecipientInput } from './components/RecipientInput';
 import { TransactionPanel } from './components/TransactionPanel';
 import { Recipient } from './types';
-import './App.css';
 
 function App() {
   const [recipients, setRecipients] = useState<Recipient[]>([]);
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Navigation />
+
       <div className="container px-4 py-8">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Somnia Multisender
-          </h1>
-          <p className="text-gray-600 mb-6">
+        <div className="text-center mb-8">
+          <p className="text-gray-600 text-lg">
             Send SOMI or ERC20 tokens to multiple recipients in a single transaction
           </p>
-          <div className="flex justify-center">
-            <ConnectButton />
-          </div>
-        </header>
+        </div>
 
         <div className="grid grid-cols-1 gap-8" style={{maxWidth: '1200px', margin: '0 auto'}}>
           <div className="space-y-6">
