@@ -28,12 +28,12 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
   // Get ERC20 ABI from environment variables
   const getERC20AbiConfig = () => {
     try {
-      return getERC20ABI();
+      const config = getERC20ABI();
+      return config.abi;
     } catch {
       return [];
     }
   };
-
 
   // Check allowance for ERC20 tokens
   const contractConfig = (() => {
@@ -44,22 +44,48 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
     }
   })();
 
-  // TODO: Add proper allowance checking with correct wagmi v2 API
-  // For now, we'll use a simplified approach that checks approval after user interactions
-  const allowance = undefined;
-  const refetchAllowance = () => {};
+  // Read ERC20 token decimals - conditionally enabled
+  const shouldFetchTokenData = !isNative && !!tokenAddress && /^0x[a-fA-F0-9]{40}$/.test(tokenAddress) && !!address;
 
-  // ERC20 token balance checking (simplified approach)
-  // TODO: Implement proper ERC20 balance checking with wagmi v2 API
-  const tokenBalance = undefined;
+  const { data: decimalsData } = useReadContract(
+    shouldFetchTokenData ? {
+      address: tokenAddress as `0x${string}`,
+      abi: getERC20AbiConfig(),
+      functionName: 'decimals',
+    } : undefined
+  );
+
+  // Read ERC20 token balance for current user
+  const { data: tokenBalanceData, refetch: refetchBalance } = useReadContract(
+    shouldFetchTokenData ? {
+      address: tokenAddress as `0x${string}`,
+      abi: getERC20AbiConfig(),
+      functionName: 'balanceOf',
+      args: [address],
+    } : undefined
+  );
+
+  // Read ERC20 token allowance for the contract
+  const { data: allowanceData, refetch: refetchAllowance } = useReadContract(
+    shouldFetchTokenData ? {
+      address: tokenAddress as `0x${string}`,
+      abi: getERC20AbiConfig(),
+      functionName: 'allowance',
+      args: [address, contractConfig.address],
+    } : undefined
+  );
 
   // Simplified approach - assume approval is needed for ERC20 tokens
   // In a future version, we can add proper allowance checking
 
-  // Set default decimals
+  // Set token decimals from contract or default to 18
   useEffect(() => {
-    setTokenDecimals(18);
-  }, []);
+    if (!isNative && decimalsData !== undefined) {
+      setTokenDecimals(decimalsData as number);
+    } else {
+      setTokenDecimals(18);
+    }
+  }, [isNative, decimalsData]);
 
   const calculateTotal = () => {
     return recipients.reduce((sum, recipient) => {
@@ -72,6 +98,24 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
     return isNative ? parseEther(total.toString()) : parseUnits(total.toString(), tokenDecimals);
   };
 
+  // Helper function to format token amounts with proper decimals
+  const formatTokenAmount = (amount: bigint, decimals?: number) => {
+    const actualDecimals = decimals || tokenDecimals || 18;
+    const divisor = BigInt(10 ** actualDecimals);
+    const wholePart = amount / divisor;
+    const fractionalPart = amount % divisor;
+
+    // Convert fractional part to decimal representation
+    const fractionalStr = fractionalPart.toString().padStart(actualDecimals, '0');
+    const trimmedFractional = fractionalStr.replace(/0+$/, '');
+
+    if (trimmedFractional === '') {
+      return wholePart.toString();
+    } else {
+      return `${wholePart}.${trimmedFractional}`;
+    }
+  };
+
   // Clear approved token when token address changes
   useEffect(() => {
     if (tokenAddress !== approvedToken) {
@@ -82,12 +126,12 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
   // Check if approval is needed for ERC20 tokens based on actual allowance
   useEffect(() => {
     if (!isNative && recipients.length > 0 && tokenAddress) {
-      // Check if this token has already been approved
+      // Check if this token has already been approved recently
       if (approvedToken === tokenAddress) {
         setNeedsApproval(false);
-      } else if (allowance !== undefined) {
+      } else if (allowanceData !== undefined) {
         const totalRequired = getTotalAmountInWei();
-        const currentAllowance = allowance as bigint;
+        const currentAllowance = allowanceData as bigint;
         setNeedsApproval(currentAllowance < totalRequired);
       } else {
         // If allowance is still loading, assume approval is needed
@@ -96,7 +140,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
     } else {
       setNeedsApproval(false);
     }
-  }, [recipients, isNative, tokenAddress, allowance, approvedToken]);
+  }, [recipients, isNative, tokenAddress, allowanceData, approvedToken]);
 
   // Auto-refresh approval status after successful approval transaction
   useEffect(() => {
@@ -198,6 +242,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
           functionName: 'disperseNative',
           args: [addresses, amounts],
           value: totalValue,
+          gas: BigInt(300000), // Gas limit for native token dispersal
         });
       } else {
         // Check if approval is sufficient for ERC20 tokens
@@ -206,11 +251,16 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
           return;
         }
 
-        // Calculate total tokens needed for the transaction
+        // Check ERC20 token balance
         const totalTokensRequired = amounts.reduce((sum, amount) => sum + amount, BigInt(0));
-
-        // Note: We would check ERC20 token balance here, but due to wagmi v2 API complexity,
-        // we'll let the smart contract handle the balance check and provide a clear error message
+        if (tokenBalanceData !== undefined) {
+          const currentBalance = tokenBalanceData as bigint;
+          if (currentBalance < totalTokensRequired) {
+            const actualDecimals = decimalsData ? Number(decimalsData) : tokenDecimals;
+            setError(`Insufficient token balance. Required: ${formatTokenAmount(totalTokensRequired, actualDecimals)} tokens, Available: ${formatTokenAmount(currentBalance, actualDecimals)} tokens`);
+            return;
+          }
+        }
 
         // Call disperseToken function
         (writeContract as any)({
@@ -218,23 +268,12 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
           abi: contractConfig.abi,
           functionName: 'disperseToken',
           args: [tokenAddress as `0x${string}`, addresses, amounts],
+          gas: BigInt(500000), // Higher gas limit for token dispersal
         });
       }
     } catch (error: any) {
       console.error('Transaction error:', error);
-
-      // Check for common ERC20 errors and provide helpful messages
-      const errorMessage = error.message || '';
-      if (errorMessage.includes('transfer amount exceeds balance')) {
-        setError('Insufficient token balance. Please check that you have enough tokens in your wallet to complete all transfers.');
-      } else if (errorMessage.includes('ERC20: insufficient allowance')) {
-        setError('Token allowance insufficient. Please approve token spending again.');
-        setNeedsApproval(true);
-      } else if (errorMessage.includes('User rejected') || errorMessage.includes('user rejected')) {
-        setError('Transaction was cancelled by user.');
-      } else {
-        setError(errorMessage || 'Transaction failed. Please try again.');
-      }
+      setError(error.message || 'Transaction failed. Please try again.');
     }
   };
 
@@ -306,12 +345,12 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
           </div>
           <div className="flex justify-between text-sm">
             <span>Total Amount:</span>
-            <span>{calculateTotal().toFixed(6)} {isNative ? 'SOMI' : 'tokens'}</span>
+            <span>{calculateTotal()} {isNative ? 'SOMI' : 'tokens'}</span>
           </div>
           {balance && isNative && (
             <div className="flex justify-between text-sm">
               <span>Wallet Balance:</span>
-              <span>{parseFloat(formatEther(balance.value)).toFixed(6)} SOMI</span>
+              <span>{formatTokenAmount(balance.value, 18)} SOMI</span>
             </div>
           )}
           {!isNative && (
@@ -323,22 +362,20 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
           {!isNative && (
             <div className="flex justify-between text-sm">
               <span>Required Amount:</span>
-              <span className="font-mono text-xs">{calculateTotal().toFixed(6)} tokens</span>
+              <span className="font-mono text-xs">{calculateTotal()} tokens</span>
+            </div>
+          )}
+          {!isNative && tokenBalanceData !== undefined && (
+            <div className="flex justify-between text-sm">
+              <span>Token Balance:</span>
+              <span className="font-mono text-xs">
+                {formatTokenAmount(tokenBalanceData as bigint, decimalsData ? Number(decimalsData) : undefined)} tokens
+              </span>
             </div>
           )}
           {!isNative && needsApproval && (
             <div className="text-xs text-yellow-700 mt-1">
               ⚠️ Token approval required before sending
-            </div>
-          )}
-          {!isNative && !needsApproval && (
-            <div>
-              <div className="text-xs text-green-700 mt-1">
-                ✅ Ready to send tokens
-              </div>
-              <div className="text-xs text-blue-600 mt-1">
-                💡 Ensure you have at least {calculateTotal().toFixed(6)} tokens in your wallet
-              </div>
             </div>
           )}
         </div>
