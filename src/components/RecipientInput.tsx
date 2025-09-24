@@ -134,21 +134,13 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
         <label className="block text-sm font-medium mb-2">
           📁 Upload CSV File
         </label>
-        <div className="flex gap-2 items-center">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="flex-1 p-2 border rounded-lg text-sm bg-white"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600"
-          >
-            Browse
-          </button>
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleFileUpload}
+          className="w-full p-2 border rounded-lg text-sm bg-white"
+        />
         <p className="text-xs text-gray-600 mt-2">
           CSV format: Two columns - wallet address, amount (e.g., 0x123..., 1.5)
         </p>
