@@ -8,7 +8,7 @@ A decentralized application for sending SOMI tokens or ERC20 tokens to multiple 
 - **Somnia Network Integration**: Built specifically for Somnia Mainnet (Chain ID: 5031)
 - **Wallet Integration**: Connect with MetaMask and other Web3 wallets via RainbowKit
 - **Smart Contract Interface**: Configurable contract address and ABI
-- **Batch Input**: Enter recipients via text area or individual forms
+- **CSV File Upload**: Import recipients from CSV files with validation
 - **Transaction Tracking**: View transactions on Somnia Explorer
 
 ## Network Details
@@ -54,8 +54,9 @@ function disperseToken(IERC20 token, address[] memory recipients, uint256[] memo
 
 1. **Connect Wallet**: Click "Connect Wallet" and select your preferred wallet
 2. **Add Recipients**:
-   - Use bulk input (format: `address, amount` per line)
-   - Or add recipients individually
+   - Upload a CSV file (address, amount format)
+   - Use manual text input (format: `address, amount` per line)
+   - Or add recipients individually using the form
 3. **Select Token Type**: Choose between native SOMI or ERC20 tokens
 4. **Execute Transaction**: Review details and click "Disperse"
 
@@ -72,8 +73,9 @@ The app uses the following environment variables:
 ```
 src/
 ├── components/
+│   ├── Navigation.tsx        # Navigation bar with Somnia branding
 │   ├── ContractConfig.tsx    # Contract configuration panel
-│   ├── RecipientInput.tsx    # Recipient input interface
+│   ├── RecipientInput.tsx    # Recipient input interface (CSV, manual, forms)
 │   └── TransactionPanel.tsx  # Transaction execution panel
 ├── config/
 │   └── wagmi.ts             # Web3 configuration
