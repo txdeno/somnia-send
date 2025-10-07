@@ -1,32 +1,37 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { defineChain } from "viem";
+import { createConfig, http, injected } from "wagmi";
 
-const somniaMainnet = {
+const RPC_URL = "https://api.infra.mainnet.somnia.network/";
+
+const somniaMainnet = defineChain({
   id: 5031,
-  name: 'SOMNIA MAINNET',
+  name: "SOMNIA MAINNET",
   nativeCurrency: {
     decimals: 18,
-    name: 'SOMI',
-    symbol: 'SOMI',
+    name: "SOMI",
+    symbol: "SOMI",
   },
   rpcUrls: {
     default: {
-      http: ['https://api.infra.mainnet.somnia.network/'],
+      http: [RPC_URL],
     },
     public: {
-      http: ['https://api.infra.mainnet.somnia.network/'],
+      http: [RPC_URL],
     },
   },
   blockExplorers: {
     default: {
-      name: 'Somnia Explorer',
-      url: 'https://explorer.somnia.network/',
+      name: "Somnia Explorer",
+      url: "https://explorer.somnia.network/",
     },
   },
-} as const;
+});
 
-export const config = getDefaultConfig({
-  appName: 'Somnia Multisender',
-  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
+export const config = createConfig({
   chains: [somniaMainnet],
+  transports: {
+    [somniaMainnet.id]: http(RPC_URL),
+  },
   ssr: false,
+  connectors: [injected({ shimDisconnect: true })],
 });
